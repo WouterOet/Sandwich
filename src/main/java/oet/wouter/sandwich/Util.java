@@ -17,6 +17,7 @@ import static org.apache.kafka.common.serialization.Serdes.String;
 import static org.apache.kafka.common.serialization.Serdes.serdeFrom;
 
 public class Util {
+
     static void createKafkaStream(StreamsBuilder streamsBuilder) {
         KafkaStreams streams = new KafkaStreams(streamsBuilder.build(), getStreamsConfig());
         streams.start();
@@ -24,7 +25,22 @@ public class Util {
         Runtime.getRuntime().addShutdownHook(new Thread(streams::close));
     }
 
-    static <K, V, KN> KeyValueMapper<K, V, KeyValue<KN, V>> mapToProperty(Function<V, KN> func) {
+    /**
+     * A util function for repartitioning based on a property of the value of a message. The new key will be
+     * the property and the new value will be the same as the old one.
+     *
+     * E.g.
+     * <pre>
+     *     stream() // of SoldSandwich
+     *        .map(mapToProperty(SoldSandwich::getName))
+     * </pre>
+     * @param func which convert the value to the key. Usually Message::getSomeProperty
+     * @param <K> the old key
+     * @param <V> the old value
+     * @param <NK> the new key
+     * @return a KeyValueMapper
+     */
+    static <K, V, NK> KeyValueMapper<K, V, KeyValue<NK, V>> mapToProperty(Function<V, NK> func) {
         return (k, v) -> new KeyValue<>(func.apply(v), v);
     }
 
