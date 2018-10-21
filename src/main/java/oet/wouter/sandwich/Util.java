@@ -18,7 +18,7 @@ import static org.apache.kafka.common.serialization.Serdes.serdeFrom;
 
 public class Util {
 
-    static void createKafkaStream(StreamsBuilder streamsBuilder) {
+    public static void createKafkaStream(StreamsBuilder streamsBuilder) {
         KafkaStreams streams = new KafkaStreams(streamsBuilder.build(), getStreamsConfig());
         streams.start();
 
@@ -70,7 +70,7 @@ public class Util {
         return serdeFrom(instance, instance);
     }
 
-    static KStream<String, SoldSandwich> buildStream(StreamsBuilder streamsBuilder) {
+    public static KStream<String, SoldSandwich> buildStream(StreamsBuilder streamsBuilder) {
         return streamsBuilder.stream(Main.SOLD_SANDWICHES_TOPIC, Consumed.with(String(), Main.SOLDSANDWICH_SERDE, null, Topology.AutoOffsetReset.LATEST));
     }
 }

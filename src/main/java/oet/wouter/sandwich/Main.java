@@ -3,9 +3,12 @@ package oet.wouter.sandwich;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Serde;
-import org.apache.kafka.streams.*;
+import org.apache.kafka.streams.Consumed;
+import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -13,9 +16,6 @@ import java.util.concurrent.TimeUnit;
 
 import static org.apache.kafka.common.serialization.Serdes.Integer;
 import static org.apache.kafka.common.serialization.Serdes.String;
-
-import java.lang.String;
-import java.lang.Long;
 
 public class Main {
 
@@ -28,9 +28,9 @@ public class Main {
     private static final int BOUND = 10;
 
     private static final Serde<Location> LOCATION_SERDE = Util.getSerde(Location.class);
-    public static final Serde<SoldSandwich> SOLDSANDWICH_SERDE = Util.getSerde(SoldSandwich.class);
+    static final Serde<SoldSandwich> SOLDSANDWICH_SERDE = Util.getSerde(SoldSandwich.class);
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         runSandwichProducer();
         runLocationUpdater();
         runEnricher();
@@ -48,7 +48,8 @@ public class Main {
                 .groupByKey(Serialized.with(String(), SOLDSANDWICH_SERDE))
                 .count()
                 .toStream()
-                .to(COUNTED_SANDWICHES_TOPIC, Produced.with(String(), Util.getSerde(Long.class)));
+                .map((key, value) -> new KeyValue<>(key, "Sold " + value + " of type " + key))
+                .to(COUNTED_SANDWICHES_TOPIC, Produced.with(String(), String()));
 
         Util.createKafkaStream(streamsBuilder);
     }
@@ -126,5 +127,5 @@ public class Main {
             }
         }).start();
     }
-
 }
+
